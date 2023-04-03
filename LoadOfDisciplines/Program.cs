@@ -7,7 +7,9 @@ public class Program
 	public static void Main(string[] args)
 	{
 		Console.WriteLine("Run");
-		using var workbook = new XLWorkbook(@"..\..\..\..\Шаблон дисциплины.xlsx");
+		var excelFile = "Шаблон дисциплины.xlsx";
+		var excelPath = File.Exists(excelFile) ? excelFile : @"..\..\..\..\" + excelFile;
+		using var workbook = new XLWorkbook(excelPath);
 		var worksheet = workbook.Worksheets.First();
 		//worksheet.Cell("A3").Value = Guid.NewGuid().ToString();
 		for (int r = 3; r < ushort.MaxValue; r++)
