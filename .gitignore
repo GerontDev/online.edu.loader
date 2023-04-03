@@ -1,0 +1,16 @@
+# git ignore file
+*\obj\*
+*\bin\*
+pkg/
+pkgobj/
+obj/
+bin/
+*DotSettings.user*
+*.suo
+*.suo
+*.dbmdl
+*.user
+packages/
+built/
+!packages/repositories.config
+/.vs
