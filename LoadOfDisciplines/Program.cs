@@ -1,13 +1,15 @@
-﻿using System.Net.Http.Json;
+﻿using ClosedXML.Excel;
+using LoadOfDisciplines.Models;
+using System.Net.Http.Json;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using ClosedXML.Excel;
-using LoadOfDisciplines.Models;
 
 namespace LoadOfDisciplines;
 
 public class Program
 {
+	private const string DisciplinePrefix = "DISC";
+
 	public static async Task Main(string[] args)
 	{
 		if (!args.Any() || args.Length != 4)
@@ -45,8 +47,8 @@ public class Program
 		onlineEduClient.BaseAddress = new Uri(urlOfonline_edu_ru);
 
 		if (!(worksheet.Cell(1, 1).Value.GetText() == "external_id" &&
-		      worksheet.Cell(1, 2).Value.GetText() == "title" &&
-		      worksheet.Cell(1, 3).Value.GetText() == "ID"))
+			  worksheet.Cell(1, 2).Value.GetText() == "title" &&
+			  worksheet.Cell(1, 3).Value.GetText() == "ID"))
 			throw new Exception("File is invalid. Columns is need [external_id, title, ID] ");
 
 		Console.WriteLine("Run process");
@@ -54,25 +56,25 @@ public class Program
 		{
 			var titleCell = worksheet.Cell(r, 2);
 
-			if(!titleCell.Value.IsText || string.IsNullOrEmpty(titleCell.Value.GetText()))
+			if (!titleCell.Value.IsText || string.IsNullOrEmpty(titleCell.Value.GetText()))
 				break;
 
 			string title = titleCell.Value.GetText();
-			var external_id_call = worksheet.Cell(r, 1);
-			string external_id = Guid.NewGuid().ToString();
+			var externalIdCall = worksheet.Cell(r, 1);
+			string externalId = DisciplinePrefix + Guid.NewGuid().ToString();
 
-			if (!external_id_call.Value.IsText || string.IsNullOrEmpty(external_id_call.Value.GetText()))
+			if (!externalIdCall.Value.IsText || string.IsNullOrEmpty(externalIdCall.Value.GetText()))
 			{
-				worksheet.Cell(r, 1).Value = external_id;
+				worksheet.Cell(r, 1).Value = externalId;
 			}
 			else
 			{
-				external_id = external_id_call.Value.GetText();
-				worksheet.Cell(r, 1).Value = external_id;
+				externalId = externalIdCall.Value.GetText();
+				worksheet.Cell(r, 1).Value = externalId;
 			}
 
 			var result = await PostDisciplinesAsync(client: onlineEduClient, OrganizationId,
-				new Discipline() { ExternalId = external_id, Title = title });
+				new Discipline() { ExternalId = externalId, Title = title });
 
 			worksheet.Cell(r, 3).Value = result.Id;
 		}
@@ -81,18 +83,18 @@ public class Program
 		Console.WriteLine("Complied");
 	}
 
-	public async static Task<DisciplineStatusSave> PostDisciplinesAsync(HttpClient client, string organizationId, Discipline discipline)
+	public static async Task<DisciplineStatusSave> PostDisciplinesAsync(HttpClient client, string organizationId, Discipline discipline)
 	{
 		var disciplines = new DisciplinesSave()
 		{
 			OrganizationId = organizationId,
 			Disciplines = new[] { discipline }
 		};
-		string jsonString = JsonSerializer.Serialize(disciplines, new JsonSerializerOptions() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,  });
+		string jsonString = JsonSerializer.Serialize(disciplines, new JsonSerializerOptions() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, });
 		var response = await client.PostAsJsonAsync("disciplines", disciplines, new JsonSerializerOptions() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }, new CancellationToken());
 		if (!response.IsSuccessStatusCode)
 			throw new Exception(await response.Content.ReadAsStringAsync());
-		using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+		await using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 		var resultObject = JsonSerializer.Deserialize<ResultsPost<DisciplineStatusSave>>(stream);
 		DisciplineStatusSave? infoSave = resultObject?.Results?.FirstOrDefault();
 		if (infoSave is null)

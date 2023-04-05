@@ -8,6 +8,8 @@ namespace LoadOfEducationalPrograms;
 
 public class Program
 {
+	private const string EducationalProgramPrefix = "EDUPRO";
+
 	public static async Task Main(string[] args)
 	{
 		if (!args.Any() || args.Length != 4)
@@ -76,44 +78,44 @@ public class Program
 
 			string title = titleCell.Value.GetText();
 
-			var external_id_cell = worksheet.Cell(r, externalIdColumnNumber);
-			var direction_cell = worksheet.Cell(r, directionColumnNumber);
-			var codeDirection_cell = worksheet.Cell(r, codeDirectionColumnNumber);
-			var startYear_cell = worksheet.Cell(r, startYearColumnNumber);
-			var endYear_call = worksheet.Cell(r, endYearColumnNumber);
+			var externalIdCell = worksheet.Cell(r, externalIdColumnNumber);
+			var directionCell = worksheet.Cell(r, directionColumnNumber);
+			var codeDirectionCell = worksheet.Cell(r, codeDirectionColumnNumber);
+			var startYearCell = worksheet.Cell(r, startYearColumnNumber);
+			var endYearCall = worksheet.Cell(r, endYearColumnNumber);
 
 
-			string external_id = Guid.NewGuid().ToString();
+			string externalId = EducationalProgramPrefix +  Guid.NewGuid().ToString();
 
-			if (!external_id_cell.Value.IsText || string.IsNullOrEmpty(external_id_cell.Value.GetText()))
+			if (!externalIdCell.Value.IsText || string.IsNullOrEmpty(externalIdCell.Value.GetText()))
 			{
-				worksheet.Cell(r, 1).Value = external_id;
+				worksheet.Cell(r, 1).Value = externalId;
 			}
 			else
 			{
-				external_id = external_id_cell.Value.GetText();
-				worksheet.Cell(r, 1).Value = external_id;
+				externalId = externalIdCell.Value.GetText();
+				worksheet.Cell(r, 1).Value = externalId;
 			}
 
-			var direction = direction_cell.Value.GetText();
+			var direction = directionCell.Value.GetText();
 			if (string.IsNullOrEmpty(direction))
 				throw new Exception($"Excel file, column {r} direction is empty");
 
-			var codeDirection = codeDirection_cell.Value.GetText();
+			var codeDirection = codeDirectionCell.Value.GetText();
 			if (string.IsNullOrEmpty(codeDirection))
 				throw new Exception($"Excel file, column {r} Code Direction is empty");
 
-			var startYear = startYear_cell.Value.GetNumber();
+			var startYear = startYearCell.Value.GetNumber();
 			if (startYear < 1900)
 				throw new Exception($"Excel file, column {r} Code Direction is invalid");
 
-			var endYear = endYear_call.Value.GetNumber();
+			var endYear = endYearCall.Value.GetNumber();
 			if (endYear < 1900)
 				throw new Exception($"Excel file, column {r} Code Direction is invalid");
 
 			var savingEducationalProgram = new EducationalProgram()
 			{
-				ExternalId = external_id,
+				ExternalId = externalId,
 				Title = title,
 				Direction = direction,
 				CodeDirection = codeDirection,
