@@ -10,9 +10,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoadOfEducationalPrograms", "LoadOfEducationalPrograms\LoadOfEducationalPrograms.csproj", "{76E5BE8E-6768-483D-AC53-892D311363B2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoadOfEducationalPrograms", "LoadOfEducationalPrograms\LoadOfEducationalPrograms.csproj", "{76E5BE8E-6768-483D-AC53-892D311363B2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Service.Core", "Service.Core\Service.Core.csproj", "{C92707D3-FC9B-4F1E-A912-331FE47D659B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Service.Core", "Service.Core\Service.Core.csproj", "{C92707D3-FC9B-4F1E-A912-331FE47D659B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoadOfStudyPlans", "LoadOfStudyPlans\LoadOfStudyPlans.csproj", "{7A24F01D-4277-4C22-9BD4-40DA254F1D6E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +34,10 @@ Global
 		{C92707D3-FC9B-4F1E-A912-331FE47D659B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C92707D3-FC9B-4F1E-A912-331FE47D659B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C92707D3-FC9B-4F1E-A912-331FE47D659B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A24F01D-4277-4C22-9BD4-40DA254F1D6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A24F01D-4277-4C22-9BD4-40DA254F1D6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A24F01D-4277-4C22-9BD4-40DA254F1D6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A24F01D-4277-4C22-9BD4-40DA254F1D6E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
