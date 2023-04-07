@@ -3,6 +3,7 @@ using Service.Core.Model;
 using System.Net.Http.Json;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using Service.Core;
 
 namespace LoadOfStudyPlans;
 
@@ -12,23 +13,28 @@ public class Program
 
 	public static async Task Main(string[] args)
 	{
-		if (!args.Any() || args.Length != 4)
+		if (!args.Any() || args.Length != 5)
 		{
-			Console.WriteLine("Usage: LoadOfEducationalPrograms [X-CN-UUID] [OrganizationId] \"[Path to file.xlsx]\" [url to api of online.edu.ru]");
+			Console.WriteLine("Usage: LoadOfEducationalPrograms [X-CN-UUID] [OrganizationId] \"[Path to file.xlsx]\" \"[Path to directory file.xlsx]\" [url to api of online.edu.ru]");
 			return;
 		}
 
 		string X_CN_UUID = args[0];
 		string organizationId = args[1];
 		var excelFile = args[2];
-		string urlOfonline_edu_ru = args[3];
+		string directoryExcelFile = args[3];
+		string urlOfonline_edu_ru = args[4];
 
 		var excelPath = File.Exists(excelFile) ? excelFile : @"..\..\..\..\" + excelFile;
+		var directoryExcelPath = File.Exists(directoryExcelFile) ? directoryExcelFile : @"..\..\..\..\" + directoryExcelFile;
 
 		Console.WriteLine("Check");
 
 		if (!File.Exists(excelPath))
 			throw new FileNotFoundException("File not found", excelPath);
+
+		if (!File.Exists(directoryExcelPath))
+			throw new FileNotFoundException("Directory file not found", directoryExcelFile);
 
 		if (string.IsNullOrEmpty(X_CN_UUID))
 			throw new ArgumentNullException(nameof(X_CN_UUID));
@@ -46,63 +52,51 @@ public class Program
 		onlineEduClient.DefaultRequestHeaders.Add("X-CN-UUID", X_CN_UUID);
 		onlineEduClient.BaseAddress = new Uri(urlOfonline_edu_ru);
 
-		var checkColumns = new[] { "external_id", "title", "direction", "code_direction", "start_year", "end_year", "education_form", "educational_program", "ID" };
-
-		if (IsInvalidExcelFile(worksheet, checkColumns))
-			throw new Exception($"File is invalid. Columns is need [{string.Join(", ", checkColumns)}] ");
-
+		StructureExcel.CheckHeaderExcel(worksheet, StructureExcel.StudyPlans.HeaderColumns);
 
 		Console.WriteLine("Run process");
 
-		await ProcessLoading(worksheet, onlineEduClient, organizationId);
+		await ProcessLoading(worksheet, onlineEduClient, organizationId, EducationalProgramsExcel.Load(directoryExcelPath));
 
 		workbook.Save();
 		Console.WriteLine("Complied");
 	}
 
-	private static async Task ProcessLoading(IXLWorksheet worksheet, HttpClient onlineEduClient, string organizationId)
+	private static async Task ProcessLoading(IXLWorksheet worksheet, HttpClient onlineEduClient, string organizationId, IReadOnlyList<EducationalProgram> educationalPrograms)
 	{
-		const int externalIdColumnNumber = 1;
-		const int tileColumnNumber = 2;
-		const int directionColumnNumber = 3;
-		const int codeDirectionColumnNumber = 4;
-		const int startYearColumnNumber = 5;
-		const int endYearColumnNumber = 6;
-		const int educationFormColumnNumber = 7;
-		const int educationalProgramColumnNumber = 8;
-		const int idColumnNumber = 9;
 
-		for (int r = 3; r < ushort.MaxValue; r++)
+		for (int rowIndex = 3; rowIndex < ushort.MaxValue; rowIndex++)
 		{
-			var titleCell = worksheet.Cell(r, tileColumnNumber);
+			var titleCell = worksheet.Cell(rowIndex, StructureExcel.StudyPlans.Columns.TileColumnNumber);
 
 			if (!titleCell.Value.IsText || string.IsNullOrEmpty(titleCell.Value.GetText()))
 				break;
 
-			var externalIdCell = worksheet.Cell(r, externalIdColumnNumber);
-			var directionCell = worksheet.Cell(r, directionColumnNumber);
-			var codeDirectionCell = worksheet.Cell(r, codeDirectionColumnNumber);
-			var startYearCell = worksheet.Cell(r, startYearColumnNumber);
-			var endYearCall = worksheet.Cell(r, endYearColumnNumber);
-			var educationFormCall = worksheet.Cell(r, educationFormColumnNumber);
-			var educationalProgramCall = worksheet.Cell(r, educationalProgramColumnNumber);
+			var externalIdCell = worksheet.Cell(rowIndex, StructureExcel.StudyPlans.Columns.ExternalIdColumnNumber);
+			var directionCell = worksheet.Cell(rowIndex, StructureExcel.StudyPlans.Columns.DirectionColumnNumber);
+			var codeDirectionCell = worksheet.Cell(rowIndex, StructureExcel.StudyPlans.Columns.CodeDirectionColumnNumber);
+			var startYearCell = worksheet.Cell(rowIndex, StructureExcel.StudyPlans.Columns.StartYearColumnNumber);
+			var endYearCall = worksheet.Cell(rowIndex, StructureExcel.StudyPlans.Columns.EndYearColumnNumber);
+			var educationFormCall = worksheet.Cell(rowIndex, StructureExcel.StudyPlans.Columns.EducationFormColumnNumber);
+			var educationalProgramCall = worksheet.Cell(rowIndex, StructureExcel.StudyPlans.Columns.EducationalProgramColumnNumber);
 
 
 			string externalId = StudyPansPrefix + Guid.NewGuid().ToString();
 
 			if (!externalIdCell.Value.IsText || string.IsNullOrEmpty(externalIdCell.Value.GetText()))
 			{
-				worksheet.Cell(r, 1).Value = externalId;
+				worksheet.Cell(rowIndex, 1).Value = externalId;
 			}
 			else
 			{
 				externalId = externalIdCell.Value.GetText();
-				worksheet.Cell(r, 1).Value = externalId;
+				worksheet.Cell(rowIndex, 1).Value = externalId;
 			}
 
 			if (codeDirectionCell.Value.IsDateTime)
-				throw new Exception($"Excel file, row {r} Code Direction is DataTime, should be text");
+				throw new Exception($"Excel file, row {rowIndex} Code Direction is DataTime, should be text");
 
+			
 			var savingStudyPlan = new StudyPlan()
 			{
 				ExternalId = externalId,
@@ -115,11 +109,22 @@ public class Program
 				EducationalProgram = educationalProgramCall.Value.GetText()
 			};
 
-			Check(savingStudyPlan, r);
+			var educationalProgram = educationalPrograms.FirstOrDefault(_ =>
+				string.Equals(_.Direction, savingStudyPlan.Direction, StringComparison.CurrentCultureIgnoreCase));
+
+			if (educationalProgram is null)
+				throw new Exception($"Don't exist educational program of direction=\"{savingStudyPlan.Direction}\". Row{rowIndex}");
+
+			if (string.IsNullOrEmpty(educationalProgram.ExternalId))
+				throw new Exception($"Don't exist educational program of direction=\"{savingStudyPlan.Direction}\". Row{rowIndex}");
+
+			savingStudyPlan.EducationalProgram = educationalProgram.ExternalId;
+			Check(savingStudyPlan, rowIndex);
 
 			var result = await PostStudyPlansAsync(client: onlineEduClient, organizationId, savingStudyPlan);
 
-			worksheet.Cell(r, idColumnNumber).Value = result.Id;
+			worksheet.Cell(rowIndex, StructureExcel.StudyPlans.Columns.IdColumnNumber).Value = result.Id;
+			worksheet.Cell(rowIndex, StructureExcel.StudyPlans.Columns.EducationalProgramColumnNumber).Value = educationalProgram.ExternalId;
 		}
 	}
 
@@ -142,18 +147,6 @@ public class Program
 
 		if (string.IsNullOrEmpty(studyPlan.EducationalProgram))
 			throw new Exception($"Excel file, row {rowIndex} Educational Program is empty");
-
-	}
-
-	private static bool IsInvalidExcelFile(IXLWorksheet worksheet, string[] columns)
-	{
-		for (int c = 1; c <= columns.Length; c++)
-		{
-			if (worksheet.Cell(c, 1).Value.GetText() != columns[c - 1])
-				return false;
-		}
-
-		return true;
 	}
 
 	public static async Task<ResultStatusSave> PostStudyPlansAsync(HttpClient client, string organizationId, StudyPlan studyPlan)

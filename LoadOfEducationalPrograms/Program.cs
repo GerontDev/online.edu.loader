@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using Service.Core;
 using Service.Core.Model;
 using System.Net.Http.Json;
 using System.Text.Encodings.Web;
@@ -46,10 +47,7 @@ public class Program
 		onlineEduClient.DefaultRequestHeaders.Add("X-CN-UUID", X_CN_UUID);
 		onlineEduClient.BaseAddress = new Uri(urlOfonline_edu_ru);
 
-		var checkColumns = new[] { "external_id", "title", "direction", "code_direction", "start_year", "end_year", "ID" };
-
-		if (IsInvalideExcelFile(worksheet, checkColumns))
-			throw new Exception($"File is invalid. Columns is need [{string.Join(", ", checkColumns)}] ");
+		StructureExcel.CheckHeaderExcel(worksheet, StructureExcel.EducationalPrograms.HeaderColumns);
 
 		Console.WriteLine("Run process");
 
@@ -61,82 +59,50 @@ public class Program
 
 	private static async Task ProcessLoading(IXLWorksheet worksheet, HttpClient onlineEduClient, string organizationId)
 	{
-		const int externalIdColumnNumber = 1;
-		const int tileColumnNumber = 2;
-		const int directionColumnNumber = 3;
-		const int codeDirectionColumnNumber = 4;
-		const int startYearColumnNumber = 5;
-		const int endYearColumnNumber = 6;
-		const int idColumnNumber = 7;
-
-		for (int r = 3; r < ushort.MaxValue; r++)
+		for (int row = 3; row < ushort.MaxValue; row++)
 		{
-			var titleCell = worksheet.Cell(r, tileColumnNumber);
+			var titleCell = worksheet.Cell(row, StructureExcel.EducationalPrograms.Columns.TileColumnNumber);
 
 			if (!titleCell.Value.IsText || string.IsNullOrEmpty(titleCell.Value.GetText()))
 				break;
 
 			string title = titleCell.Value.GetText();
 
-			var externalIdCell = worksheet.Cell(r, externalIdColumnNumber);
-			var directionCell = worksheet.Cell(r, directionColumnNumber);
-			var codeDirectionCell = worksheet.Cell(r, codeDirectionColumnNumber);
-			var startYearCell = worksheet.Cell(r, startYearColumnNumber);
-			var endYearCall = worksheet.Cell(r, endYearColumnNumber);
+			var externalIdCell = worksheet.Cell(row, StructureExcel.EducationalPrograms.Columns.ExternalIdColumnNumber);
+			var directionCell = worksheet.Cell(row, StructureExcel.EducationalPrograms.Columns.DirectionColumnNumber);
+			var codeDirectionCell = worksheet.Cell(row, StructureExcel.EducationalPrograms.Columns.CodeDirectionColumnNumber);
+			var startYearCell = worksheet.Cell(row, StructureExcel.EducationalPrograms.Columns.StartYearColumnNumber);
+			var endYearCall = worksheet.Cell(row, StructureExcel.EducationalPrograms.Columns.EndYearColumnNumber);
 
 
-			string externalId = EducationalProgramPrefix +  Guid.NewGuid().ToString();
+			string externalId = EducationalProgramPrefix + Guid.NewGuid().ToString();
 
 			if (!externalIdCell.Value.IsText || string.IsNullOrEmpty(externalIdCell.Value.GetText()))
 			{
-				worksheet.Cell(r, 1).Value = externalId;
+				worksheet.Cell(row, 1).Value = externalId;
 			}
 			else
 			{
 				externalId = externalIdCell.Value.GetText();
-				worksheet.Cell(r, 1).Value = externalId;
+				worksheet.Cell(row, 1).Value = externalId;
 			}
-
-			var direction = directionCell.Value.GetText();
-			if (string.IsNullOrEmpty(direction))
-				throw new Exception($"Excel file, column {r} direction is empty");
-
-			var codeDirection = codeDirectionCell.Value.GetText();
-			if (string.IsNullOrEmpty(codeDirection))
-				throw new Exception($"Excel file, column {r} Code Direction is empty");
-
-			var startYear = startYearCell.Value.GetNumber();
-			if (startYear < 1900)
-				throw new Exception($"Excel file, column {r} Start Year is invalid");
-
-			var endYear = endYearCall.Value.GetNumber();
-			if (endYear < 1900)
-				throw new Exception($"Excel file, column {r} End Year is invalid");
 
 			var savingEducationalProgram = new EducationalProgram()
 			{
 				ExternalId = externalId,
 				Title = title,
-				Direction = direction,
-				CodeDirection = codeDirection,
-				EndYear = (int)endYear,
-				StartYear = (int)startYear
+				Direction = directionCell.Value.GetText(),
+				CodeDirection = codeDirectionCell.Value.GetText(),
+				EndYear = (int)startYearCell.Value.GetNumber(),
+				StartYear = (int)endYearCall.Value.GetNumber()
 			};
+
+			savingEducationalProgram.Check(row);
+
 			var result = await PostEducationalProgramsAsync(client: onlineEduClient, organizationId, savingEducationalProgram);
 
-			worksheet.Cell(r, idColumnNumber).Value = result.Id;
+			worksheet.Cell(row, StructureExcel.EducationalPrograms.Columns.IdColumnNumber).Value = result.Id;
 		}
-	}
-
-	private static bool IsInvalideExcelFile(IXLWorksheet worksheet, string[] columns)
-	{
-		for (int c = 1; c <= columns.Length; c++)
-		{
-			if (worksheet.Cell(c, 1).Value.GetText() != columns[c - 1])
-				return false;
-		}
-
-		return true;
 	}
 
 	public static async Task<ResultStatusSave> PostEducationalProgramsAsync(HttpClient client, string organizationId, EducationalProgram educationalProgram)
