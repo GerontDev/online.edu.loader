@@ -93,10 +93,8 @@ public class Program
 				worksheet.Cell(rowIndex, 1).Value = externalId;
 			}
 
-			if (codeDirectionCell.Value.IsDateTime)
-				throw new Exception($"Excel file, row {rowIndex} Code Direction is DataTime, should be text");
+			CheckCallType(directionCell, rowIndex, codeDirectionCell, startYearCell, endYearCall, educationFormCall, null);
 
-			
 			var savingStudyPlan = new StudyPlan()
 			{
 				ExternalId = externalId,
@@ -106,7 +104,7 @@ public class Program
 				EndYear = (int)startYearCell.Value.GetNumber(),
 				StartYear = (int)endYearCall.Value.GetNumber(),
 				EducationForm = educationFormCall.Value.GetText(),
-				EducationalProgram = educationalProgramCall.Value.GetText()
+				//EducationalProgram = educationalProgramCall.Value.GetText()
 			};
 
 			var educationalProgram = educationalPrograms.FirstOrDefault(_ =>
@@ -127,6 +125,30 @@ public class Program
 			worksheet.Cell(rowIndex, StructureExcel.StudyPlans.Columns.EducationalProgramColumnNumber).Value = educationalProgram.ExternalId;
 		}
 	}
+
+	private static void CheckCallType(IXLCell directionCell, int rowIndex, IXLCell codeDirectionCell, IXLCell startYearCell,
+		IXLCell endYearCall, IXLCell educationFormCall, IXLCell? educationalProgramCall)
+	{
+		if (!directionCell.Value.IsText)
+			throw new Exception(
+				$"Excel of StudyPlans, row {rowIndex} Direction is {directionCell.Value.Type}, should be text");
+		if (!codeDirectionCell.Value.IsText)
+			throw new Exception(
+				$"Excel of StudyPlans, row {rowIndex} Code Direction is {codeDirectionCell.Value.Type}, should be text");
+		if (!startYearCell.Value.IsNumber)
+			throw new Exception(
+				$"Excel of StudyPlans, row {rowIndex} Start Year is {startYearCell.Value.Type}, should be number");
+		if (!endYearCall.Value.IsNumber)
+			throw new Exception(
+				$"Excel of StudyPlans, row {rowIndex} End Year is {endYearCall.Value.Type}, should be number");
+		if (!educationFormCall.Value.IsText)
+			throw new Exception(
+				$"Excel of StudyPlans, row {rowIndex} Education Form is {educationFormCall.Value.Type}, should be text");
+		if (educationalProgramCall is not null && !educationalProgramCall.Value.IsText)
+			throw new Exception(
+				$"Excel of StudyPlans, row {rowIndex} Educational Program is {educationalProgramCall.Value.Type}, should be text");
+	}
+
 
 	private static void Check(StudyPlan studyPlan, int rowIndex)
 	{

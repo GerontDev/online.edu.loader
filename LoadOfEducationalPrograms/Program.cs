@@ -59,33 +59,36 @@ public class Program
 
 	private static async Task ProcessLoading(IXLWorksheet worksheet, HttpClient onlineEduClient, string organizationId)
 	{
-		for (int row = 3; row < ushort.MaxValue; row++)
+		for (int rowIndex = 3; rowIndex < ushort.MaxValue; rowIndex++)
 		{
-			var titleCell = worksheet.Cell(row, StructureExcel.EducationalPrograms.Columns.TileColumnNumber);
+			var titleCell = worksheet.Cell(rowIndex, StructureExcel.EducationalPrograms.Columns.TileColumnNumber);
 
 			if (!titleCell.Value.IsText || string.IsNullOrEmpty(titleCell.Value.GetText()))
 				break;
 
 			string title = titleCell.Value.GetText();
 
-			var externalIdCell = worksheet.Cell(row, StructureExcel.EducationalPrograms.Columns.ExternalIdColumnNumber);
-			var directionCell = worksheet.Cell(row, StructureExcel.EducationalPrograms.Columns.DirectionColumnNumber);
-			var codeDirectionCell = worksheet.Cell(row, StructureExcel.EducationalPrograms.Columns.CodeDirectionColumnNumber);
-			var startYearCell = worksheet.Cell(row, StructureExcel.EducationalPrograms.Columns.StartYearColumnNumber);
-			var endYearCall = worksheet.Cell(row, StructureExcel.EducationalPrograms.Columns.EndYearColumnNumber);
+			var externalIdCell = worksheet.Cell(rowIndex, StructureExcel.EducationalPrograms.Columns.ExternalIdColumnNumber);
+			var directionCell = worksheet.Cell(rowIndex, StructureExcel.EducationalPrograms.Columns.DirectionColumnNumber);
+			var codeDirectionCell = worksheet.Cell(rowIndex, StructureExcel.EducationalPrograms.Columns.CodeDirectionColumnNumber);
+			var startYearCell = worksheet.Cell(rowIndex, StructureExcel.EducationalPrograms.Columns.StartYearColumnNumber);
+			var endYearCall = worksheet.Cell(rowIndex, StructureExcel.EducationalPrograms.Columns.EndYearColumnNumber);
 
+			
 
 			string externalId = EducationalProgramPrefix + Guid.NewGuid().ToString();
 
 			if (!externalIdCell.Value.IsText || string.IsNullOrEmpty(externalIdCell.Value.GetText()))
 			{
-				worksheet.Cell(row, 1).Value = externalId;
+				worksheet.Cell(rowIndex, 1).Value = externalId;
 			}
 			else
 			{
 				externalId = externalIdCell.Value.GetText();
-				worksheet.Cell(row, 1).Value = externalId;
+				worksheet.Cell(rowIndex, 1).Value = externalId;
 			}
+
+			EducationalProgramsExcel.CheckCellType(rowIndex, null, directionCell, codeDirectionCell, startYearCell, endYearCall, null);
 
 			var savingEducationalProgram = new EducationalProgram()
 			{
@@ -97,11 +100,11 @@ public class Program
 				StartYear = (int)endYearCall.Value.GetNumber()
 			};
 
-			savingEducationalProgram.Check(row);
+			savingEducationalProgram.Check(rowIndex);
 
 			var result = await PostEducationalProgramsAsync(client: onlineEduClient, organizationId, savingEducationalProgram);
 
-			worksheet.Cell(row, StructureExcel.EducationalPrograms.Columns.IdColumnNumber).Value = result.Id;
+			worksheet.Cell(rowIndex, StructureExcel.EducationalPrograms.Columns.IdColumnNumber).Value = result.Id;
 		}
 	}
 
