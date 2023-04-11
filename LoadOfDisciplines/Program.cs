@@ -14,7 +14,7 @@ public class Program
 	{
 		if (!args.Any() || args.Length != 4)
 		{
-			Console.WriteLine("Usage: LoadOfDisciplines [X-CN-UUID] [OrganizationId] \"[Path to Шаблон дисциплины.xlsx]\" [url to api of online.edu.ru]");
+			Console.WriteLine($"Usage: {nameof(LoadOfDisciplines)} [X-CN-UUID] [OrganizationId] \"[Path to Шаблон дисциплины.xlsx]\" [url to api of online.edu.ru]");
 			return;
 		}
 
