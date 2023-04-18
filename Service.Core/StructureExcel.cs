@@ -4,7 +4,17 @@ namespace Service.Core;
 
 public static class StructureExcel
 {
-	
+	public static class Disciplines
+	{
+		public static string[] HeaderColumns = { "external_id", "title", "ID" };
+		public static class Columns
+		{
+			public const int ExternalIdColumnNumber = 1;
+			public const int TileColumnNumber = 2;
+			public const int IdColumnNumber = 3;
+		}
+	}
+
 	public static class EducationalPrograms
 	{
 		public static string[] HeaderColumns = { "external_id", "title", "direction", "code_direction", "start_year", "end_year", "ID" };
@@ -37,7 +47,19 @@ public static class StructureExcel
 		}
 	}
 
-
+	public static class LinkDisciplinesAndStudyPlans
+	{
+		public static string[] HeaderColumns = { "title1", "title2", "study_plan", "discipline", "semester", "ID"};
+		public static class Columns
+		{
+			public const int Title1ColumnNumber = 1;
+			public const int Title2ColumnNumber = 2;
+			public const int StudyPlanColumnNumber = 3;
+			public const int DisciplineColumnNumber = 4;
+			public const int SemesterColumnNumber = 5;
+			public const int IDColumnNumber = 6;
+		}
+	}
 
 	public static bool IsInvalidExcelFile(IXLWorksheet worksheet, string[] columns)
 	{

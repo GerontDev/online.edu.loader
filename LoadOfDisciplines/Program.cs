@@ -1,8 +1,9 @@
 ﻿using ClosedXML.Excel;
-using LoadOfDisciplines.Models;
 using System.Net.Http.Json;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using Service.Core;
+using Service.Core.Model;
 
 namespace LoadOfDisciplines;
 
@@ -14,7 +15,7 @@ public class Program
 	{
 		if (!args.Any() || args.Length != 4)
 		{
-			Console.WriteLine("Usage: LoadOfDisciplines [X-CN-UUID] [OrganizationId] \"[Path to Шаблон дисциплины.xlsx]\" [url to api of online.edu.ru]");
+			Console.WriteLine($"Usage: {nameof(LoadOfDisciplines)} [X-CN-UUID] [OrganizationId] \"[Path to Шаблон дисциплины.xlsx]\" [url to api of online.edu.ru]");
 			return;
 		}
 
@@ -45,38 +46,36 @@ public class Program
 		HttpClient onlineEduClient = new HttpClient();
 		onlineEduClient.DefaultRequestHeaders.Add("X-CN-UUID", X_CN_UUID);
 		onlineEduClient.BaseAddress = new Uri(urlOfonline_edu_ru);
+		
+		StructureExcel.CheckHeaderExcel(worksheet, StructureExcel.Disciplines.HeaderColumns);
 
-		if (!(worksheet.Cell(1, 1).Value.GetText() == "external_id" &&
-			  worksheet.Cell(1, 2).Value.GetText() == "title" &&
-			  worksheet.Cell(1, 3).Value.GetText() == "ID"))
-			throw new Exception("File is invalid. Columns is need [external_id, title, ID] ");
 
 		Console.WriteLine("Run process");
 		for (int r = 3; r < ushort.MaxValue; r++)
 		{
-			var titleCell = worksheet.Cell(r, 2);
+			var titleCell = worksheet.Cell(r, StructureExcel.Disciplines.Columns.TileColumnNumber);
 
 			if (!titleCell.Value.IsText || string.IsNullOrEmpty(titleCell.Value.GetText()))
 				break;
 
 			string title = titleCell.Value.GetText();
-			var externalIdCall = worksheet.Cell(r, 1);
+			var externalIdCall = worksheet.Cell(r, StructureExcel.Disciplines.Columns.ExternalIdColumnNumber);
 			string externalId = DisciplinePrefix + Guid.NewGuid().ToString();
 
 			if (!externalIdCall.Value.IsText || string.IsNullOrEmpty(externalIdCall.Value.GetText()))
 			{
-				worksheet.Cell(r, 1).Value = externalId;
+				worksheet.Cell(r, StructureExcel.Disciplines.Columns.ExternalIdColumnNumber).Value = externalId;
 			}
 			else
 			{
 				externalId = externalIdCall.Value.GetText();
-				worksheet.Cell(r, 1).Value = externalId;
+				worksheet.Cell(r, StructureExcel.Disciplines.Columns.ExternalIdColumnNumber).Value = externalId;
 			}
 
 			var result = await PostDisciplinesAsync(client: onlineEduClient, OrganizationId,
 				new Discipline() { ExternalId = externalId, Title = title });
 
-			worksheet.Cell(r, 3).Value = result.Id;
+			worksheet.Cell(r, StructureExcel.Disciplines.Columns.IdColumnNumber).Value = result.Id;
 		}
 
 		workbook.Save();

@@ -14,7 +14,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoadOfEducationalPrograms",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Service.Core", "Service.Core\Service.Core.csproj", "{C92707D3-FC9B-4F1E-A912-331FE47D659B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoadOfStudyPlans", "LoadOfStudyPlans\LoadOfStudyPlans.csproj", "{7A24F01D-4277-4C22-9BD4-40DA254F1D6E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoadOfStudyPlans", "LoadOfStudyPlans\LoadOfStudyPlans.csproj", "{7A24F01D-4277-4C22-9BD4-40DA254F1D6E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoadOfDisciplinesAndStudyPlans", "LoadOfDisciplinesAndStudyPlans\LoadOfDisciplinesAndStudyPlans.csproj", "{4D56BC6B-8441-402F-A8B1-12273BB0C428}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,6 +40,10 @@ Global
 		{7A24F01D-4277-4C22-9BD4-40DA254F1D6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A24F01D-4277-4C22-9BD4-40DA254F1D6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A24F01D-4277-4C22-9BD4-40DA254F1D6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D56BC6B-8441-402F-A8B1-12273BB0C428}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D56BC6B-8441-402F-A8B1-12273BB0C428}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D56BC6B-8441-402F-A8B1-12273BB0C428}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D56BC6B-8441-402F-A8B1-12273BB0C428}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

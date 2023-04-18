@@ -4,6 +4,8 @@ namespace Service.Core.Model;
 
 public record class StudyPlan
 {
+	[JsonPropertyName("id")]
+	public string? Id { get; set; }
 	[JsonPropertyName("title")]
 	public string? Title { get; set; }
 	[JsonPropertyName("direction")]

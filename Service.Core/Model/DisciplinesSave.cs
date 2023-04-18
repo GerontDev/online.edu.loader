@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace LoadOfDisciplines.Models;
+namespace Service.Core.Model;
 
 public record class DisciplinesSave
 {
