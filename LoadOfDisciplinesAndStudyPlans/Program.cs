@@ -11,7 +11,7 @@ public class Program
 {
 	public static async Task Main(string[] args)
 	{
-		if (!args.Any() || args.Length != 4)
+		if (!args.Any() || args.Length != 6)
 		{
 			Console.WriteLine($"Usage: {nameof(LoadOfDisciplinesAndStudyPlans)}  [X-CN-UUID] [OrganizationId] \"[Path to file.xlsx]\" [url to api of online.edu.ru]");
 			return;
@@ -20,22 +20,26 @@ public class Program
 		string X_CN_UUID = args[0];
 		string organizationId = args[1];
 		var excelFile = args[2];
-		string directoryEducationalProgramsExcelFile = args[3];
-		string directoryDisciplineExcelFile = args[4];
-		string urlOfonline_edu_ru = args[5];
 
+		string directoryStudyPlansExcelFile = args[3];
+		string directoryDisciplinesExcelFile = args[4];
+
+		string urlOfonline_edu_ru = args[5];
+		
 		var excelPath = File.Exists(excelFile) ? excelFile : @"..\..\..\..\" + excelFile;
+		var directoryStudyPlansExcelPath = File.Exists(directoryStudyPlansExcelFile) ? directoryStudyPlansExcelFile : @"..\..\..\..\" + directoryStudyPlansExcelFile;
+		var directoryDisciplinesExcelPath = File.Exists(directoryDisciplinesExcelFile) ? directoryDisciplinesExcelFile : @"..\..\..\..\" + directoryDisciplinesExcelFile;
 
 		Console.WriteLine("Check");
 
 		if (!File.Exists(excelPath))
 			throw new FileNotFoundException("File not found", excelPath);
 
-		if (!File.Exists(directoryEducationalProgramsExcelFile))
-			throw new FileNotFoundException("Directory file not found", directoryEducationalProgramsExcelFile);
+		if (!File.Exists(directoryStudyPlansExcelPath))
+			throw new FileNotFoundException("Directory file not found", directoryStudyPlansExcelFile);
 
-		if (!File.Exists(directoryEducationalProgramsExcelFile))
-			throw new FileNotFoundException("Directory file not found", directoryEducationalProgramsExcelFile);
+		if (!File.Exists(directoryDisciplinesExcelPath))
+			throw new FileNotFoundException("Directory file not found", directoryDisciplinesExcelFile);
 
 		if (string.IsNullOrEmpty(X_CN_UUID))
 			throw new ArgumentNullException(nameof(X_CN_UUID));
@@ -57,13 +61,21 @@ public class Program
 
 		Console.WriteLine("Run process");
 
-		await ProcessLoading(worksheet, onlineEduClient, organizationId, EducationalProgramsExcel.Load(directoryEducationalProgramsExcelFile));
+		await ProcessLoading(worksheet,
+			onlineEduClient,
+			organizationId, 
+			StudyPlansExcel.Load(directoryStudyPlansExcelPath),
+			DisciplinesExcel.Load(directoryDisciplinesExcelPath));
 
 		workbook.Save();
 		Console.WriteLine("Complied");
 	}
 
-	private static async Task ProcessLoading(IXLWorksheet worksheet, HttpClient onlineEduClient, string organizationId, IReadOnlyList<EducationalProgram> educationalPrograms)
+	private static async Task ProcessLoading(IXLWorksheet worksheet, 
+		HttpClient onlineEduClient, 
+		string organizationId, 
+		IReadOnlyList<StudyPlan> studyPlans,
+		IReadOnlyList<Discipline> disciplines)
 	{
 		for (int rowIndex = 3; rowIndex < ushort.MaxValue; rowIndex++)
 		{
@@ -72,43 +84,49 @@ public class Program
 			if (!titleCell.Value.IsText || string.IsNullOrEmpty(titleCell.Value.GetText()))
 				break;
 
-			string title = titleCell.Value.GetText();
+			string title1 = titleCell.Value.GetText();
 
 			var title1Cell = worksheet.Cell(rowIndex, StructureExcel.LinkDisciplinesAndStudyPlans.Columns.Title1ColumnNumber);
 			var title2Cell = worksheet.Cell(rowIndex, StructureExcel.LinkDisciplinesAndStudyPlans.Columns.Title2ColumnNumber);
 			var studyPlanCell = worksheet.Cell(rowIndex, StructureExcel.LinkDisciplinesAndStudyPlans.Columns.StudyPlanColumnNumber);
 			var disciplineCell = worksheet.Cell(rowIndex, StructureExcel.LinkDisciplinesAndStudyPlans.Columns.DisciplineColumnNumber);
 			var semesterCell = worksheet.Cell(rowIndex, StructureExcel.LinkDisciplinesAndStudyPlans.Columns.SemesterColumnNumber);
+			var idCell = worksheet.Cell(rowIndex, StructureExcel.LinkDisciplinesAndStudyPlans.Columns.IDColumnNumber);
 
+			DisciplinesAndStudyPlansExcel.CheckCellType(rowIndex, title1Cell, title2Cell, semesterCell);
 
+			string title2 = title2Cell.Value.GetText();
+			var discipline = disciplines.Where(_ => string.Equals(_.Title, title2, StringComparison.CurrentCultureIgnoreCase)).SingleOrDefault();
+			var studyPlan = studyPlans.Where(_ => string.Equals(_.Title, title1, StringComparison.CurrentCultureIgnoreCase)).SingleOrDefault();
 
-			if (!title1Cell.Value.IsText)
-				throw new Exception(
-					$"Excel of DisciplinesAndStudyPlans, row {rowIndex} Title1 is {title1Cell.Value.Type}, should be text");
+			if (discipline is null)
+				throw new Exception($"Don't exist discipline of title2=\"{title2}\". Row {rowIndex}");
 
-			if (!title2Cell.Value.IsText)
-				throw new Exception(
-					$"Excel of DisciplinesAndStudyPlans, row {rowIndex} Title2 is {title2Cell.Value.Type}, should be text");
+			if (string.IsNullOrEmpty(discipline.ExternalId))
+				throw new Exception($"Don't exist discipline of title2=\"{title2}\". Row {rowIndex}");
 
-			if (!semesterCell.Value.IsText)
-				throw new Exception(
-					$"Excel of DisciplinesAndStudyPlans, row {rowIndex} semester is {semesterCell.Value.Type}, should be text");
+			if (studyPlan is null)
+				throw new Exception($"Don't exist discipline of title1=\"{title1}\". Row {rowIndex}");
+
+			if (string.IsNullOrEmpty(studyPlan.ExternalId))
+				throw new Exception($"Don't exist discipline of title1=\"{title1}\". Row {rowIndex}");
+
 
 
 			var savingLinkDisciplinesAndStudyPlans = new LinkDisciplinesAndStudyPlans()
 			{
-				Title = title,
-				Direction = directionCell.Value.GetText(),
-				CodeDirection = codeDirectionCell.Value.GetText(),
-				EndYear = (int)startYearCell.Value.GetNumber(),
-				StartYear = (int)endYearCall.Value.GetNumber()
+				DisciplineExternalId = discipline.ExternalId,
+				StudyPlanExternalId = studyPlan.ExternalId,
+				Semester = (int)semesterCell.Value.GetNumber()
 			};
 
-			savingEducationalProgram.Check(rowIndex);
+			savingLinkDisciplinesAndStudyPlans.Check(rowIndex);
 
 			var result = await PostEducationalProgramsAsync(client: onlineEduClient, organizationId, savingLinkDisciplinesAndStudyPlans);
 
-			worksheet.Cell(rowIndex, StructureExcel.EducationalPrograms.Columns.IdColumnNumber).Value = result.Id;
+			idCell.Value = result.Id;
+			studyPlanCell.Value = savingLinkDisciplinesAndStudyPlans.StudyPlanExternalId;
+			disciplineCell.Value = savingLinkDisciplinesAndStudyPlans.DisciplineExternalId;
 		}
 	}
 
@@ -121,7 +139,7 @@ public class Program
 		};
 		string jsonString = JsonSerializer.Serialize(educationalPrograms, new JsonSerializerOptions() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, });
 
-		var response = await client.PostAsJsonAsync("educational_programs", educationalPrograms, new JsonSerializerOptions() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }, new CancellationToken());
+		var response = await client.PostAsJsonAsync("study_plans_disciplines", educationalPrograms, new JsonSerializerOptions() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }, new CancellationToken());
 
 		if (!response.IsSuccessStatusCode)
 		{
@@ -138,7 +156,7 @@ public class Program
 			throw new ArgumentNullException(await response.Content.ReadAsStringAsync());
 		}
 
-		Console.WriteLine($"\"{linkDisciplinesAndStudyPlans.Title}\" status: {infoSave.UploadStatusType} ({infoSave.AdditionalInfo})");
+		Console.WriteLine($"\"{linkDisciplinesAndStudyPlans.DisciplineExternalId}\", \"{linkDisciplinesAndStudyPlans.StudyPlanExternalId}\", \"{linkDisciplinesAndStudyPlans.Semester}\"status: {infoSave.UploadStatusType} ({infoSave.AdditionalInfo})");
 		return infoSave;
 	}
 

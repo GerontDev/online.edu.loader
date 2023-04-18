@@ -4,7 +4,17 @@ namespace Service.Core;
 
 public static class StructureExcel
 {
-	
+	public static class Disciplines
+	{
+		public static string[] HeaderColumns = { "external_id", "title", "ID" };
+		public static class Columns
+		{
+			public const int ExternalIdColumnNumber = 1;
+			public const int TileColumnNumber = 2;
+			public const int IdColumnNumber = 3;
+		}
+	}
+
 	public static class EducationalPrograms
 	{
 		public static string[] HeaderColumns = { "external_id", "title", "direction", "code_direction", "start_year", "end_year", "ID" };

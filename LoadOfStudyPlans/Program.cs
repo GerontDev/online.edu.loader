@@ -93,7 +93,7 @@ public class Program
 				worksheet.Cell(rowIndex, 1).Value = externalId;
 			}
 
-			CheckCallType(directionCell, rowIndex, codeDirectionCell, startYearCell, endYearCall, educationFormCall, null);
+			StudyPlansExcel.CheckCellType(rowIndex, null, directionCell,codeDirectionCell, startYearCell, endYearCall, educationFormCall, educationalProgramCall, null);
 
 			var savingStudyPlan = new StudyPlan()
 			{
@@ -117,7 +117,8 @@ public class Program
 				throw new Exception($"Don't exist educational program of direction=\"{savingStudyPlan.Direction}\". Row{rowIndex}");
 
 			savingStudyPlan.EducationalProgram = educationalProgram.ExternalId;
-			Check(savingStudyPlan, rowIndex);
+
+			savingStudyPlan.Check(rowIndex);
 
 			var result = await PostStudyPlansAsync(client: onlineEduClient, organizationId, savingStudyPlan);
 
@@ -126,50 +127,6 @@ public class Program
 		}
 	}
 
-	private static void CheckCallType(IXLCell directionCell, int rowIndex, IXLCell codeDirectionCell, IXLCell startYearCell,
-		IXLCell endYearCall, IXLCell educationFormCall, IXLCell? educationalProgramCall)
-	{
-		if (!directionCell.Value.IsText)
-			throw new Exception(
-				$"Excel of StudyPlans, row {rowIndex} Direction is {directionCell.Value.Type}, should be text");
-		if (!codeDirectionCell.Value.IsText)
-			throw new Exception(
-				$"Excel of StudyPlans, row {rowIndex} Code Direction is {codeDirectionCell.Value.Type}, should be text");
-		if (!startYearCell.Value.IsNumber)
-			throw new Exception(
-				$"Excel of StudyPlans, row {rowIndex} Start Year is {startYearCell.Value.Type}, should be number");
-		if (!endYearCall.Value.IsNumber)
-			throw new Exception(
-				$"Excel of StudyPlans, row {rowIndex} End Year is {endYearCall.Value.Type}, should be number");
-		if (!educationFormCall.Value.IsText)
-			throw new Exception(
-				$"Excel of StudyPlans, row {rowIndex} Education Form is {educationFormCall.Value.Type}, should be text");
-		if (educationalProgramCall is not null && !educationalProgramCall.Value.IsText)
-			throw new Exception(
-				$"Excel of StudyPlans, row {rowIndex} Educational Program is {educationalProgramCall.Value.Type}, should be text");
-	}
-
-
-	private static void Check(StudyPlan studyPlan, int rowIndex)
-	{
-		if (string.IsNullOrEmpty(studyPlan.Direction))
-			throw new Exception($"Excel file, row {rowIndex} direction is empty");
-
-		if (string.IsNullOrEmpty(studyPlan.CodeDirection))
-			throw new Exception($"Excel file, row {rowIndex} Code Direction is empty");
-
-		if (studyPlan.StartYear < 1900)
-			throw new Exception($"Excel file, row {rowIndex} Start Year is invalid");
-
-		if (studyPlan.EndYear < 1900)
-			throw new Exception($"Excel file, row {rowIndex} End Year is invalid");
-
-		if (string.IsNullOrEmpty(studyPlan.EducationForm))
-			throw new Exception($"Excel file, row {rowIndex} Education Form is empty");
-
-		if (string.IsNullOrEmpty(studyPlan.EducationalProgram))
-			throw new Exception($"Excel file, row {rowIndex} Educational Program is empty");
-	}
 
 	public static async Task<ResultStatusSave> PostStudyPlansAsync(HttpClient client, string organizationId, StudyPlan studyPlan)
 	{

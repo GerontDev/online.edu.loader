@@ -11,4 +11,8 @@
     <PackageReference Include="ClosedXML" Version="0.101.0-rc" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Service.Core\Service.Core.csproj" />
+  </ItemGroup>
+
 </Project>
