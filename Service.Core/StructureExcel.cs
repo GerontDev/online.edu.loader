@@ -61,15 +61,35 @@ public static class StructureExcel
 		}
 	}
 
+	public static class Student
+	{
+		public static string[] HeaderColumns = { "surname", "name", "middle_name", "snils", "inn", "email", "external_id", "study_year", "ID1", "title1", "study_plan","ID2" };
+		public static class ColumnNumber
+		{
+			public const int Surname = 1;
+			public const int Name = 2;
+			public const int MiddleName = 3;
+			public const int Snils = 4;
+			public const int Inn = 5;
+			public const int Email = 6;
+			public const int ExternalId = 7;
+			public const int StudyYear = 8;
+			public const int Id1 = 9;
+			public const int Title1 = 10;
+			public const int StudyPlan = 11;
+			public const int Id2 = 12;
+		}
+	}
+
 	public static bool IsInvalidExcelFile(IXLWorksheet worksheet, string[] columns)
 	{
 		for (int c = 1; c <= columns.Length; c++)
 		{
-			if (worksheet.Cell(c, 1).Value.GetText() != columns[c - 1])
-				return false;
+			if (worksheet.Cell(1, c).Value.GetText() != columns[c - 1])
+				return true;
 		}
 
-		return true;
+		return false;
 	}
 
 	public static void CheckHeaderExcel(IXLWorksheet worksheet, string[] columns)
